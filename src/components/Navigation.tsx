@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Users, FileText, Settings } from 'lucide-react';
+import { Mail, Users, FileText, Settings, ExternalLink } from 'lucide-react';
 
 export type Tab = 'compose' | 'contacts' | 'templates' | 'settings';
 
@@ -76,9 +76,18 @@ export function Navigation({ activeTab, onTabChange }: NavigationProps) {
 
         {/* Account Info */}
         <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-[#27272A]">
-          <p className="text-xs text-[#71717A] text-center">
+          <p className="text-xs text-[#71717A] text-center mb-3">
             Secure client-side email composer
           </p>
+          <a
+            href="https://sendbox.openprocess.me"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1 text-xs text-[#E11D48] hover:text-[#F43F5E] transition-colors"
+          >
+            Official Site
+            <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
       </nav>
     </>
