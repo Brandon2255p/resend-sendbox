@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 
 const RESEND_API_BASE = 'https://api.resend.com';
 
+export async function GET() {
+  // Handle GET requests - return OK status
+  return NextResponse.json({ status: 'ok', message: 'Resend API proxy endpoint' });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
