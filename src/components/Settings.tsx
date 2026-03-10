@@ -27,15 +27,21 @@ export function Settings({ onApiKeyChange }: SettingsProps) {
 
     const result = await validateApiKey(apiKey.trim());
 
-    if (result.error) {
-      setMessage({ type: 'error', text: result.error.message });
+    if (result.error || !result.valid) {
+      setMessage({ type: 'error', text: result.error?.message || 'Invalid API key' });
       setIsVerifying(false);
       return;
     }
 
-    if (result.data) {
+    if (result.valid) {
       setApiKey(apiKey.trim());
-      setAccount(result.data);
+      // Resend doesn't provide account details, so we store a placeholder
+      setAccount({
+        id: 'resend-account',
+        email: 'account@resend.com',
+        name: 'Resend Account',
+        created_at: new Date().toISOString(),
+      });
       setMessage({ type: 'success', text: 'API key updated successfully!' });
       onApiKeyChange();
       setApiKeyInput('');

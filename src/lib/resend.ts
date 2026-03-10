@@ -55,8 +55,16 @@ async function makeRequest<T>(
   }
 }
 
-export async function validateApiKey(apiKey: string): Promise<{ data?: ResendAccount; error?: ApiError }> {
-  return makeRequest<ResendAccount>('/me', apiKey);
+export async function validateApiKey(apiKey: string): Promise<{ valid: boolean; error?: ApiError }> {
+  // Resend doesn't have a /me endpoint, so we validate by calling /domains
+  // If we get a successful response (even empty), the key is valid
+  const result = await makeRequest<{ object: string; data: unknown[] }>('/domains', apiKey);
+  
+  if (result.error) {
+    return { valid: false, error: result.error };
+  }
+  
+  return { valid: true };
 }
 
 export async function sendEmail(

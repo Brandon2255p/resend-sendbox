@@ -26,15 +26,21 @@ export function ApiKeyModal({ isOpen, onClose, onSuccess }: ApiKeyModalProps) {
 
     const result = await validateApiKey(apiKey.trim());
 
-    if (result.error) {
-      setError(result.error.message);
+    if (result.error || !result.valid) {
+      setError(result.error?.message || 'Invalid API key');
       setIsLoading(false);
       return;
     }
 
-    if (result.data) {
+    if (result.valid) {
       setApiKey(apiKey.trim());
-      setAccount(result.data);
+      // Resend doesn't provide account details, so we store a placeholder
+      setAccount({
+        id: 'resend-account',
+        email: 'account@resend.com',
+        name: 'Resend Account',
+        created_at: new Date().toISOString(),
+      });
       onSuccess();
     }
 
