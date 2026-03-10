@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ResendMail - Send Beautiful Emails",
   description: "A secure, mobile-first email composer using Resend API",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
