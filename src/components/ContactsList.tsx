@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import { Search, RefreshCw, UserPlus, Users } from 'lucide-react';
+import { Search, RefreshCw, UserPlus, Users, Edit2, Trash2, X, Check } from 'lucide-react';
 import { getApiKey, getContacts, setContacts, type ResendContact } from '@/lib/storage';
 import { getContacts as fetchResendContacts } from '@/lib/resend';
 
@@ -13,6 +13,11 @@ export function ContactsList({ onSelectContact }: ContactsListProps) {
   const [contacts, setLocalContacts] = useState<ResendContact[]>(() => getContacts());
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Add/Edit contact state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingContact, setEditingContact] = useState<ResendContact | null>(null);
+  const [newContact, setNewContact] = useState({ email: '', first_name: '', last_name: '' });
 
   const refreshContacts = async () => {
     const apiKey = getApiKey();
@@ -30,10 +35,64 @@ export function ContactsList({ onSelectContact }: ContactsListProps) {
     setIsRefreshing(false);
   };
 
-  // Load contacts on mount if empty
-  if (contacts.length === 0 && !isRefreshing) {
-    refreshContacts();
-  }
+  const handleAddContact = () => {
+    if (!newContact.email.trim()) return;
+    
+    const contact: ResendContact = {
+      id: `local-${Date.now()}`,
+      email: newContact.email.trim(),
+      first_name: newContact.first_name.trim() || null,
+      last_name: newContact.last_name.trim() || null,
+      created_at: new Date().toISOString(),
+    };
+    
+    const updated = [...contacts, contact];
+    setLocalContacts(updated);
+    setContacts(updated);
+    setNewContact({ email: '', first_name: '', last_name: '' });
+    setShowAddForm(false);
+  };
+
+  const handleEditContact = (contact: ResendContact) => {
+    setEditingContact(contact);
+    setNewContact({
+      email: contact.email,
+      first_name: contact.first_name || '',
+      last_name: contact.last_name || '',
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingContact || !newContact.email.trim()) return;
+    
+    const updated = contacts.map(c => 
+      c.id === editingContact.id 
+        ? {
+            ...c,
+            email: newContact.email.trim(),
+            first_name: newContact.first_name.trim() || null,
+            last_name: newContact.last_name.trim() || null,
+          }
+        : c
+    );
+    
+    setLocalContacts(updated);
+    setContacts(updated);
+    setEditingContact(null);
+    setNewContact({ email: '', first_name: '', last_name: '' });
+  };
+
+  const handleDeleteContact = (id: string) => {
+    const updated = contacts.filter(c => c.id !== id);
+    setLocalContacts(updated);
+    setContacts(updated);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingContact(null);
+    setShowAddForm(false);
+    setNewContact({ email: '', first_name: '', last_name: '' });
+  };
 
   const filteredContacts = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -65,15 +124,75 @@ export function ContactsList({ onSelectContact }: ContactsListProps) {
             <p className="text-sm text-[#71717A]">{contacts.length} saved contacts</p>
           </div>
         </div>
-        <button
-          onClick={refreshContacts}
-          disabled={isRefreshing}
-          className="btn btn-ghost p-2"
-          title="Refresh contacts"
-        >
-          <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="btn btn-primary p-2"
+            title="Add contact"
+          >
+            <UserPlus className="w-5 h-5" />
+          </button>
+          <button
+            onClick={refreshContacts}
+            disabled={isRefreshing}
+            className="btn btn-ghost p-2"
+            title="Refresh contacts"
+          >
+            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
+
+      {/* Add/Edit Contact Form */}
+      {(showAddForm || editingContact) && (
+        <div className="card mb-4 border-[#E11D48]/30">
+          <h3 className="text-sm font-medium text-[#FAFAFA] mb-3">
+            {editingContact ? 'Edit Contact' : 'Add Contact'}
+          </h3>
+          <div className="space-y-3">
+            <input
+              type="email"
+              value={newContact.email}
+              onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+              placeholder="Email address"
+              className="input text-sm"
+            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newContact.first_name}
+                onChange={(e) => setNewContact({ ...newContact, first_name: e.target.value })}
+                placeholder="First name"
+                className="input text-sm flex-1"
+              />
+              <input
+                type="text"
+                value={newContact.last_name}
+                onChange={(e) => setNewContact({ ...newContact, last_name: e.target.value })}
+                placeholder="Last name"
+                className="input text-sm flex-1"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancelEdit}
+                className="btn btn-secondary flex-1"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
+              <button
+                onClick={editingContact ? handleSaveEdit : handleAddContact}
+                disabled={!newContact.email.trim()}
+                className="btn btn-primary flex-1"
+              >
+                <Check className="w-4 h-4" />
+                {editingContact ? 'Save' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative mb-4">
@@ -91,22 +210,41 @@ export function ContactsList({ onSelectContact }: ContactsListProps) {
       {filteredContacts.length > 0 && (
         <div className="space-y-2">
           {filteredContacts.map((contact) => (
-            <button
+            <div
               key={contact.id}
-              onClick={() => handleSelectContact(contact)}
-              className="card w-full text-left flex items-center gap-3 hover:border-[#E11D48]/50"
+              className="card flex items-center gap-3 group"
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E11D48] to-[#F43F5E] flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                {contact.first_name?.[0] || contact.email[0].toUpperCase()}
+              <button
+                onClick={() => handleSelectContact(contact)}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E11D48] to-[#F43F5E] flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                  {contact.first_name?.[0] || contact.email[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#FAFAFA] truncate">
+                    {contact.first_name} {contact.last_name}
+                  </p>
+                  <p className="text-xs text-[#71717A] truncate">{contact.email}</p>
+                </div>
+              </button>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleEditContact(contact)}
+                  className="p-2 text-[#71717A] hover:text-[#E11D48] transition-colors"
+                  title="Edit"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteContact(contact.id)}
+                  className="p-2 text-[#71717A] hover:text-[#EF4444] transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#FAFAFA] truncate">
-                  {contact.first_name} {contact.last_name}
-                </p>
-                <p className="text-xs text-[#71717A] truncate">{contact.email}</p>
-              </div>
-              <UserPlus className="w-4 h-4 text-[#71717A] flex-shrink-0" />
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -121,16 +259,25 @@ export function ContactsList({ onSelectContact }: ContactsListProps) {
           <p className="text-sm text-[#71717A] mb-4">
             {searchQuery 
               ? 'Try adjusting your search' 
-              : 'Add contacts to your Resend audience to see them here'}
+              : 'Add contacts to your list to get started'}
           </p>
           {!searchQuery && (
-            <button
-              onClick={refreshContacts}
-              className="btn btn-secondary"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </button>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="btn btn-primary"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add Contact
+              </button>
+              <button
+                onClick={refreshContacts}
+                className="btn btn-secondary"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </button>
+            </div>
           )}
         </div>
       )}

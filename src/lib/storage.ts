@@ -110,4 +110,19 @@ export function clearAllData(): void {
   Object.values(STORAGE_KEYS).forEach(key => {
     localStorage.removeItem(key);
   });
+  localStorage.removeItem(SENDER_SETTINGS_KEY);
+  localStorage.removeItem(DEFAULT_FROM_KEY);
+}
+
+// Default From Address
+const DEFAULT_FROM_KEY = 'resend_default_from';
+
+export function getDefaultFromAddress(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(DEFAULT_FROM_KEY);
+}
+
+export function setDefaultFromAddress(from: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(DEFAULT_FROM_KEY, from);
 }

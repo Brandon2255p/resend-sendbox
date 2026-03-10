@@ -6,7 +6,7 @@ import {
   UserPlus, Loader2, CheckCircle, Globe
 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
-import { getApiKey, getAccount, getSenderSettings, setSenderSettings, type ResendContact, type ResendTemplate, type ResendDomain } from '@/lib/storage';
+import { getApiKey, getAccount, getSenderSettings, setSenderSettings, getDefaultFromAddress, type ResendContact, type ResendTemplate, type ResendDomain } from '@/lib/storage';
 import { sendEmail, fileToBase64, validateEmails, getDomains, type Attachment } from '@/lib/resend';
 
 interface EmailComposerProps {
@@ -36,14 +36,40 @@ export function EmailComposer({ contacts, template, onSendSuccess, onClearTempla
   const fileInputRef = useRef<HTMLInputElement>(null);
   const account = getAccount();
   
-  // Load saved sender settings for initial state
+  // Load saved sender settings and default from address for initial state
   const savedSettings = typeof window !== 'undefined' ? getSenderSettings() : null;
-  const [senderName, setSenderName] = useState(savedSettings?.name || '');
-  const [fromEmail, setFromEmail] = useState(savedSettings?.domain?.split('@')[0] || '');
+  const defaultFrom = typeof window !== 'undefined' ? getDefaultFromAddress() : null;
+  
+  // Parse default from address if available
+  const parseDefaultFrom = () => {
+    if (defaultFrom) {
+      const match = defaultFrom.match(/^(?:"?([^"]+)"?\s*<)?([^>]+)>?$/);
+      if (match) {
+        const name = match[1]?.trim() || '';
+        const email = match[2]?.trim();
+        const [local, domain] = email?.split('@') || ['', ''];
+        return { name, local, domain };
+      }
+      // Simple email format
+      const [local, domain] = defaultFrom.split('@');
+      return { name: '', local: local || '', domain: domain || '' };
+    }
+    // Fall back to sender settings
+    const savedDomain = savedSettings?.domain;
+    if (savedDomain) {
+      const [local, domain] = savedDomain.split('@');
+      return { name: savedSettings?.name || '', local: local || '', domain: domain || '' };
+    }
+    return { name: '', local: '', domain: '' };
+  };
+  
+  const initialFrom = parseDefaultFrom();
+  const [senderName, setSenderName] = useState(initialFrom.name);
+  const [fromEmail, setFromEmail] = useState(initialFrom.local);
   
   // Domain and sender state
   const [domains, setDomains] = useState<ResendDomain[]>([]);
-  const [selectedDomain, setSelectedDomain] = useState(savedSettings?.domain?.split('@')[1] || '');
+  const [selectedDomain, setSelectedDomain] = useState(initialFrom.domain);
   const [isLoadingDomains, setIsLoadingDomains] = useState(false);
   const hasSetDefaultDomain = useRef(false);
 
@@ -58,7 +84,7 @@ export function EmailComposer({ contacts, template, onSendSuccess, onClearTempla
       if (result.data?.data) {
         setDomains(result.data.data);
         // Set default domain if none selected (only once)
-        if (!hasSetDefaultDomain.current && !savedSettings?.domain) {
+        if (!hasSetDefaultDomain.current && !initialFrom.domain && !selectedDomain) {
           hasSetDefaultDomain.current = true;
           const verifiedDomain = result.data.data.find(d => d.status === 'verified');
           if (verifiedDomain) {
