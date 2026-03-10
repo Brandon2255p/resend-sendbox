@@ -1,5 +1,5 @@
 // Resend API utilities - calls go through Next.js API route to avoid CORS
-import type { ResendAccount, ResendContact, ResendTemplate } from './storage';
+import type { ResendAccount, ResendContact, ResendTemplate, ResendDomain } from './storage';
 
 const API_ROUTE = '/api/resend';
 
@@ -89,6 +89,12 @@ export async function getTemplates(
   apiKey: string
 ): Promise<{ data?: { data: ResendTemplate[] }; error?: ApiError }> {
   return makeRequest<{ data: ResendTemplate[] }>('/templates', apiKey);
+}
+
+export async function getDomains(
+  apiKey: string
+): Promise<{ data?: { data: ResendDomain[] }; error?: ApiError }> {
+  return makeRequest<{ data: ResendDomain[] }>('/domains', apiKey);
 }
 
 export function fileToBase64(file: File): Promise<string> {

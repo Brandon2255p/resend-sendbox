@@ -31,6 +31,32 @@ export interface ResendTemplate {
   created_at: string;
 }
 
+export interface ResendDomain {
+  id: string;
+  name: string;
+  created_at: string;
+  region: string;
+  status: 'pending' | 'verified' | 'failed';
+}
+
+export interface SenderSettings {
+  name: string;
+  domain: string;
+}
+
+const SENDER_SETTINGS_KEY = 'resend_sender_settings';
+
+export function getSenderSettings(): SenderSettings | null {
+  if (typeof window === 'undefined') return null;
+  const data = localStorage.getItem(SENDER_SETTINGS_KEY);
+  return data ? JSON.parse(data) : null;
+}
+
+export function setSenderSettings(settings: SenderSettings): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SENDER_SETTINGS_KEY, JSON.stringify(settings));
+}
+
 export function getApiKey(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(STORAGE_KEYS.API_KEY);

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Send, Paperclip, X, ChevronDown, ChevronUp,
-  UserPlus, Loader2, CheckCircle
+  UserPlus, Loader2, CheckCircle, Globe
 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
-import { getApiKey, getAccount, type ResendContact, type ResendTemplate } from '@/lib/storage';
-import { sendEmail, fileToBase64, validateEmails, type Attachment } from '@/lib/resend';
+import { getApiKey, getAccount, getSenderSettings, setSenderSettings, type ResendContact, type ResendTemplate, type ResendDomain } from '@/lib/storage';
+import { sendEmail, fileToBase64, validateEmails, getDomains, type Attachment } from '@/lib/resend';
 
 interface EmailComposerProps {
   contacts: ResendContact[];
@@ -35,6 +35,52 @@ export function EmailComposer({ contacts, template, onSendSuccess, onClearTempla
   const [sendSuccess, setSendSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const account = getAccount();
+  
+  // Load saved sender settings for initial state
+  const savedSettings = typeof window !== 'undefined' ? getSenderSettings() : null;
+  const [senderName, setSenderName] = useState(savedSettings?.name || '');
+  const [fromEmail, setFromEmail] = useState(savedSettings?.domain?.split('@')[0] || '');
+  
+  // Domain and sender state
+  const [domains, setDomains] = useState<ResendDomain[]>([]);
+  const [selectedDomain, setSelectedDomain] = useState(savedSettings?.domain?.split('@')[1] || '');
+  const [isLoadingDomains, setIsLoadingDomains] = useState(false);
+  const hasSetDefaultDomain = useRef(false);
+
+  // Load domains on mount and set default if needed
+  useEffect(() => {
+    const loadDomains = async () => {
+      const apiKey = getApiKey();
+      if (!apiKey) return;
+      
+      setIsLoadingDomains(true);
+      const result = await getDomains(apiKey);
+      if (result.data?.data) {
+        setDomains(result.data.data);
+        // Set default domain if none selected (only once)
+        if (!hasSetDefaultDomain.current && !savedSettings?.domain) {
+          hasSetDefaultDomain.current = true;
+          const verifiedDomain = result.data.data.find(d => d.status === 'verified');
+          if (verifiedDomain) {
+            setSelectedDomain(verifiedDomain.name);
+          } else if (result.data.data.length > 0) {
+            setSelectedDomain(result.data.data[0].name);
+          }
+        }
+      }
+      setIsLoadingDomains(false);
+    };
+
+    loadDomains();
+  }, []);
+
+  // Update from email when domain or sender changes
+  useEffect(() => {
+    if (selectedDomain && fromEmail) {
+      // Save settings when they change
+      setSenderSettings({ name: senderName, domain: `${fromEmail}@${selectedDomain}` });
+    }
+  }, [selectedDomain, fromEmail, senderName]);
 
   // Handle template loading
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,6 +172,10 @@ export function EmailComposer({ contacts, template, onSendSuccess, onClearTempla
 
   const handleSend = async () => {
     if (!validateForm()) return;
+    if (!selectedDomain || !fromEmail) {
+      alert('Please configure your sender email address');
+      return;
+    }
     
     const apiKey = getApiKey();
     if (!apiKey) return;
@@ -144,8 +194,17 @@ export function EmailComposer({ contacts, template, onSendSuccess, onClearTempla
       }))
     );
 
+    // Format from address: "Name <email@domain.com>" or just "email@domain.com"
+    const fullFromEmail = `${fromEmail}@${selectedDomain}`;
+    const fromAddress = senderName.trim() 
+      ? `${senderName.trim()} <${fullFromEmail}>`
+      : fullFromEmail;
+
+    // Save sender settings
+    setSenderSettings({ name: senderName, domain: fullFromEmail });
+
     const result = await sendEmail(apiKey, {
-      from: account?.email || '',
+      from: fromAddress,
       to: toEmails,
       cc: ccEmails.length > 0 ? ccEmails : undefined,
       bcc: bccEmails.length > 0 ? bccEmails : undefined,
@@ -186,8 +245,56 @@ export function EmailComposer({ contacts, template, onSendSuccess, onClearTempla
       {/* From */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-[#A1A1AA] mb-2">From</label>
-        <div className="input bg-[#141416] cursor-not-allowed opacity-70">
-          {account?.email || 'Loading...'}
+        <div className="space-y-3">
+          {/* Sender Name */}
+          <input
+            type="text"
+            value={senderName}
+            onChange={(e) => setSenderName(e.target.value)}
+            placeholder="Sender Name (optional)"
+            className="input w-full"
+          />
+          
+          {/* Email Address */}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={fromEmail}
+              onChange={(e) => setFromEmail(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))}
+              placeholder="name"
+              className="input flex-1"
+            />
+            <span className="text-[#71717A]">@</span>
+            {isLoadingDomains ? (
+              <div className="input flex-1 opacity-70">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+            ) : domains.length > 0 ? (
+              <select
+                value={selectedDomain}
+                onChange={(e) => setSelectedDomain(e.target.value)}
+                className="input flex-1 appearance-none cursor-pointer"
+              >
+                {domains.map((domain) => (
+                  <option key={domain.id} value={domain.name}>
+                    {domain.name} {domain.status === 'verified' ? '✓' : '(pending)'}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="input flex-1 text-[#71717A]">
+                <Globe className="w-4 h-4 inline mr-2" />
+                No domains found
+              </div>
+            )}
+          </div>
+          
+          {/* Preview of full from address */}
+          {(senderName || fromEmail) && selectedDomain && (
+            <p className="text-xs text-[#71717A]">
+              Will send as: {senderName ? `${senderName} <${fromEmail}@${selectedDomain}>` : `${fromEmail}@${selectedDomain}`}
+            </p>
+          )}
         </div>
       </div>
 
