@@ -4,7 +4,13 @@ const RESEND_API_BASE = 'https://api.resend.com';
 
 export async function GET() {
   // Handle GET requests - return OK status
+  console.log('GET request received');
   return NextResponse.json({ status: 'ok', message: 'Resend API proxy endpoint' });
+}
+
+export async function HEAD() {
+  console.log('HEAD request received');
+  return new NextResponse(null, { status: 200 });
 }
 
 export async function OPTIONS() {
@@ -21,6 +27,8 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
+    const url = new URL(request.url);
+    console.log('POST request received, method in body:', request.method, 'URL:', url.pathname);
     const body = await request.json();
     const { apiKey, endpoint, method = 'GET', data } = body;
 
