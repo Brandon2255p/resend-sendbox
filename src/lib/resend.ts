@@ -1,7 +1,7 @@
-// Resend API utilities - all calls happen from browser
+// Resend API utilities - calls go through Next.js API route to avoid CORS
 import type { ResendAccount, ResendContact, ResendTemplate } from './storage';
 
-const RESEND_API_BASE = 'https://api.resend.com';
+const API_ROUTE = '/api/resend';
 
 export interface Attachment {
   filename: string;
@@ -30,22 +30,26 @@ async function makeRequest<T>(
   options: RequestInit = {}
 ): Promise<{ data?: T; error?: ApiError }> {
   try {
-    const response = await fetch(`${RESEND_API_BASE}${endpoint}`, {
-      ...options,
+    const response = await fetch(API_ROUTE, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        ...options.headers,
       },
+      body: JSON.stringify({
+        apiKey,
+        endpoint,
+        method: options.method || 'GET',
+        data: options.body ? JSON.parse(options.body as string) : undefined,
+      }),
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
     if (!response.ok) {
-      return { error: { message: data.message || 'An error occurred' } };
+      return { error: { message: result.error || 'An error occurred' } };
     }
 
-    return { data: data as T };
+    return { data: result as T };
   } catch (error) {
     return { error: { message: error instanceof Error ? error.message : 'Network error' } };
   }
