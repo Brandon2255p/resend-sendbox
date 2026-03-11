@@ -110,4 +110,4 @@ vercel --prod
 
 ## License
 
-MIT
+[License](LICENSE)
