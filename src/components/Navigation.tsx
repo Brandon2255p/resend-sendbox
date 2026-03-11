@@ -50,7 +50,7 @@ export function Navigation({ activeTab, onTabChange }: NavigationProps) {
               <Mail className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-[#FAFAFA]">ResendMail</h1>
+              <h1 className="text-lg font-semibold text-[#FAFAFA]">SendBox</h1>
               <p className="text-xs text-[#71717A]">Email Composer</p>
             </div>
           </div>

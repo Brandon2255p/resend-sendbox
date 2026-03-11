@@ -60,7 +60,7 @@ function AppContent() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#E11D48] to-[#F43F5E] flex items-center justify-center">
               <Mail className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-[#FAFAFA]">ResendMail</span>
+            <span className="font-semibold text-[#FAFAFA]">SendBox</span>
           </div>
           {activeTab === 'compose' && (
             <button
