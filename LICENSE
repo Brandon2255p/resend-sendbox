@@ -1,0 +1,43 @@
+Non-Commercial License with Attribution
+
+Copyright (c) 2026 OpenProcessLabs
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, and sublicense, subject to
+the following conditions:
+
+1. NON-COMMERCIAL USE ONLY
+   The Software may not be used, in whole or in part, for any commercial
+   purpose. Commercial use includes, but is not limited to:
+   - Selling the Software or derivative works
+   - Using the Software as part of a paid service or product
+   - Using the Software to generate revenue, directly or indirectly
+   - Use by a for-profit entity in its operations
+
+2. ATTRIBUTION REQUIRED
+   Any derivative works, forks, or redistributions must prominently display
+   the following attribution:
+   
+   "Based on Sendbox by OpenProcessLabs (https://sendbox.openprocess.me)"
+   
+   This attribution must be included in:
+   - The source code (in a header comment or README)
+   - Any user interface or documentation
+   - Any distribution or publication of the derivative work
+
+3. PRESERVATION OF COPYRIGHT NOTICE
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+For licensing inquiries or commercial use permissions, contact:
+https://sendbox.openprocess.me
