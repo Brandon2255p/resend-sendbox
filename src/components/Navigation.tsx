@@ -90,7 +90,7 @@ export function Navigation({ activeTab, onTabChange }: NavigationProps) {
               <ExternalLink className="w-3 h-3" />
             </a>
             <a
-              href="https://github.com/openprocesslabs/sendbox"
+              href="https://github.com/Brandon2255p/resend-sendbox"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-[#71717A] hover:text-[#FAFAFA] transition-colors"
